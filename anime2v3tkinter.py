@@ -1,6 +1,8 @@
 import tkinter as tk
 import time
 from PIL import Image, ImageTk
+import cv2
+import numpy as np
 
 # Constants
 NUM_CACHE_LINES = 4
@@ -91,3 +93,38 @@ animate()
 
 # Start the Tkinter event loop
 root.mainloop()
+# Import necessary libraries
+
+# Define the output video file name
+output_file = 'animation.mp4'
+
+# Create a VideoWriter object
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter(output_file, fourcc, 20.0, (800, 600))
+
+# Function to convert tkinter canvas to numpy array
+def canvas_to_array(canvas):
+    canvas.postscript(file='temp.ps', colormode='color')
+    img = Image.open('temp.ps')
+    img_array = np.array(img)
+    return img_array
+
+# Run the animation
+animate()
+
+# Convert each frame of the animation to numpy array and write to video file
+for block_address in range(NUM_MEMORY_BLOCKS * 2):
+    # Clear the canvas
+    canvas.delete("all")
+
+    # Draw the animation
+    animate()
+
+    # Convert canvas to numpy array
+    frame = canvas_to_array(canvas)
+
+    # Write frame to video file
+    out.write(frame)
+
+# Release the VideoWriter object
+out.release()

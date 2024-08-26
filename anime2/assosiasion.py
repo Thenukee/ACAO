@@ -3,10 +3,10 @@ import time
 from PIL import Image, ImageTk
 
 # Constants
-NUM_CACHE_LINES = 8  # Total cache lines
+NUM_CACHE_LINES = 8  # Increased number of cache lines
 SET_SIZE = 2  # Number of lines per set (2-way set associative)
 NUM_SETS = NUM_CACHE_LINES // SET_SIZE  # Number of sets
-NUM_MEMORY_BLOCKS = 8
+NUM_MEMORY_BLOCKS = 16  # Number of memory blocks
 CACHE_LINE_HEIGHT = 50
 MEMORY_BLOCK_HEIGHT = 40  # Height for main memory blocks
 
@@ -44,7 +44,7 @@ def update_cache(block_address):
 root = tk.Tk()
 root.title("Set-Associative Mapping Cache Animation")
 
-canvas = tk.Canvas(root, width=800, height=600)
+canvas = tk.Canvas(root, width=900, height=800)  # Increased height for additional cache lines
 canvas.pack()
 
 # Load CPU image
@@ -71,8 +71,8 @@ def animate():
         # Draw main memory blocks with addresses and block numbers
         for i in range(NUM_MEMORY_BLOCKS):
             color = 'grey' if i != block_address % NUM_MEMORY_BLOCKS else 'blue'
-            canvas.create_rectangle(550, 100 + i * MEMORY_BLOCK_HEIGHT, 700, 100 + (i + 1) * MEMORY_BLOCK_HEIGHT, fill=color)
-            canvas.create_text(625, 100 + (i + 0.5) * MEMORY_BLOCK_HEIGHT, text=f"Block {i}\nAddr {i*4:02X}", font=("Arial", 10))
+            canvas.create_rectangle(300, 100 + i * MEMORY_BLOCK_HEIGHT, 450, 100 + (i + 1) * MEMORY_BLOCK_HEIGHT, fill=color)
+            canvas.create_text(375, 100 + (i + 0.5) * MEMORY_BLOCK_HEIGHT, text=f"Block {i}\nAddr {i*4:02X}", font=("Arial", 10))
 
         # Update cache
         is_cache_miss = update_cache(block_address % NUM_MEMORY_BLOCKS)
@@ -81,21 +81,25 @@ def animate():
         for set_idx in range(NUM_SETS):
             for line_idx in range(SET_SIZE):
                 color = 'lightblue' if cache_tags[set_idx][line_idx] != -1 else 'white'
-                canvas.create_rectangle(250, 100 + (set_idx * SET_SIZE + line_idx) * CACHE_LINE_HEIGHT, 400, 100 + (set_idx * SET_SIZE + line_idx + 1) * CACHE_LINE_HEIGHT, fill=color, outline='black')
+                canvas.create_rectangle(600, 100 + (set_idx * SET_SIZE + line_idx) * CACHE_LINE_HEIGHT, 750, 100 + (set_idx * SET_SIZE + line_idx + 1) * CACHE_LINE_HEIGHT, fill=color, outline='black')
                 if cache_tags[set_idx][line_idx] != -1:
-                    canvas.create_text(325, 100 + (set_idx * SET_SIZE + line_idx + 0.5) * CACHE_LINE_HEIGHT, text=f"Block {cache_tags[set_idx][line_idx]} (Addr {cache_tags[set_idx][line_idx]*4:02X})", font=("Arial", 10))
+                    canvas.create_text(675, 100 + (set_idx * SET_SIZE + line_idx + 0.5) * CACHE_LINE_HEIGHT, text=f"Block {cache_tags[set_idx][line_idx]} (Addr {cache_tags[set_idx][line_idx]*4:02X})", font=("Arial", 10))
 
-        # Draw arrows
+        # Draw arrows for grouping and clarity
+        # Arrow from CPU to memory block
+        draw_arrow(canvas, 80, 100, 300, 100 + block_address % NUM_MEMORY_BLOCKS * MEMORY_BLOCK_HEIGHT + MEMORY_BLOCK_HEIGHT // 2, color="blue")
+        canvas.create_text(190, 80, text="Memory Access", fill="blue", font=("Arial", 10, "bold"))
+
         if is_cache_miss:
             # Draw arrow for cache miss (to the relevant set)
-            draw_arrow(canvas, 80, 100, 250, 100 + set_idx * SET_SIZE * CACHE_LINE_HEIGHT + CACHE_LINE_HEIGHT // 2, color="red")
-            canvas.create_text(165, 80, text="Cache Miss", fill="red", font=("Arial", 10, "bold"))
+            draw_arrow(canvas, 450, 100 + block_address % NUM_MEMORY_BLOCKS * MEMORY_BLOCK_HEIGHT + MEMORY_BLOCK_HEIGHT // 2, 600, 100 + set_idx * SET_SIZE * CACHE_LINE_HEIGHT + CACHE_LINE_HEIGHT // 2, color="red")
+            canvas.create_text(525, 80, text="Cache Miss", fill="red", font=("Arial", 10, "bold"))
         else:
             # Only find the hit line index if the block is in the set
             if block_address % NUM_MEMORY_BLOCKS in cache_tags[set_idx]:
                 hit_line_idx = cache_tags[set_idx].index(block_address % NUM_MEMORY_BLOCKS)
-                draw_arrow(canvas, 80, 100, 250, 100 + (set_idx * SET_SIZE + hit_line_idx) * CACHE_LINE_HEIGHT + CACHE_LINE_HEIGHT // 2, color="green")
-                canvas.create_text(165, 80, text="Cache Hit", fill="green", font=("Arial", 10, "bold"))
+                draw_arrow(canvas, 450, 100 + block_address % NUM_MEMORY_BLOCKS * MEMORY_BLOCK_HEIGHT + MEMORY_BLOCK_HEIGHT // 2, 600, 100 + (set_idx * SET_SIZE + hit_line_idx) * CACHE_LINE_HEIGHT + CACHE_LINE_HEIGHT // 2, color="green")
+                canvas.create_text(525, 80, text="Cache Hit", fill="green", font=("Arial", 10, "bold"))
 
         # Draw calculation steps
         canvas.create_text(125, 300, text=f"Calculation:", font=("Arial", 12, "bold"))
@@ -103,8 +107,8 @@ def animate():
         canvas.create_text(125, 360, text=f"Set Index = {block_address % NUM_MEMORY_BLOCKS} % {NUM_SETS} = {set_idx}", font=("Arial", 12, "bold"))
 
         # Draw labels
-        canvas.create_text(625, 70, text="Main Memory", font=("Arial", 12, "bold"))
-        canvas.create_text(325, 70, text="Cache Lines", font=("Arial", 12, "bold"))
+        canvas.create_text(375, 70, text="Main Memory", font=("Arial", 12, "bold"))
+        canvas.create_text(675, 70, text="Cache Lines", font=("Arial", 12, "bold"))
 
         # Update the canvas
         root.update()
